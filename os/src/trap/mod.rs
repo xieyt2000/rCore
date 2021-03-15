@@ -33,15 +33,15 @@ pub fn trap_handler(cx: &mut TrapContext) -> &mut TrapContext {
         }
         Trap::Exception(Exception::StoreFault) |
         Trap::Exception(Exception::StorePageFault) => {
-            log::error!("[kernel] PageFault.");
+            log::error!("[kernel] PageFault in application, core dumped.");
             run_next_app();
         }
         Trap::Exception(Exception::IllegalInstruction) => {
-            log::error!("[kernel] Illegal Instruction.");
+            log::error!("[kernel] IllegalInstruction in application, core dumped.");
             run_next_app();
         }
         _ => {
-            panic!("Unsupported trap {:?}, stval = {:#x}!", scause.cause(), stval);
+            log::error!("Unsupported trap {:?}, stval = {:#x}!", scause.cause(), stval);
         }
     }
     cx
