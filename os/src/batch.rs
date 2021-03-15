@@ -2,7 +2,7 @@ use core::cell::RefCell;
 use lazy_static::*;
 use crate::trap::TrapContext;
 
-const USER_STACK_SIZE: usize = 4096 * 2;
+const USER_STACK_SIZE: usize = 4096;
 const KERNEL_STACK_SIZE: usize = 4096 * 2;
 const MAX_APP_NUM: usize = 16;
 const APP_BASE_ADDRESS: usize = 0x80400000;
@@ -41,18 +41,20 @@ impl UserStack {
 struct AppManager {
     inner: RefCell<AppManagerInner>,
 }
+
 struct AppManagerInner {
     num_app: usize,
     current_app: usize,
     app_start: [usize; MAX_APP_NUM + 1],
 }
+
 unsafe impl Sync for AppManager {}
 
 impl AppManagerInner {
     pub fn print_app_info(&self) {
-        println!("[kernel] num_app = {}", self.num_app);
+        log::info!("[kernel] num_app = {}", self.num_app);
         for i in 0..self.num_app {
-            println!("[kernel] app_{} [{:#x}, {:#x})", i, self.app_start[i], self.app_start[i + 1]);
+            log::info!("[kernel] app_{} [{:#x}, {:#x})", i, self.app_start[i], self.app_start[i + 1]);
         }
     }
 
@@ -60,7 +62,7 @@ impl AppManagerInner {
         if app_id >= self.num_app {
             panic!("All applications completed!");
         }
-        println!("[kernel] Loading app_{}", app_id);
+        log::info!("[kernel] Loading app_{}", app_id);
         // clear icache
         llvm_asm!("fence.i" :::: "volatile");
         // clear app area
@@ -69,11 +71,11 @@ impl AppManagerInner {
         });
         let app_src = core::slice::from_raw_parts(
             self.app_start[app_id] as *const u8,
-            self.app_start[app_id + 1] - self.app_start[app_id]
+            self.app_start[app_id + 1] - self.app_start[app_id],
         );
         let app_dst = core::slice::from_raw_parts_mut(
             APP_BASE_ADDRESS as *mut u8,
-            app_src.len()
+            app_src.len(),
         );
         app_dst.copy_from_slice(app_src);
     }
@@ -126,4 +128,13 @@ pub fn run_next_app() -> ! {
         ) as *const _ as usize);
     }
     panic!("Unreachable in batch::run_current_app!");
+}
+
+/// return true if [start, end) falls in address of U mode
+pub fn user_addr(start: usize, len: usize) -> bool {
+    let end = start + len;
+    let user_sp = USER_STACK.get_sp();
+    if (start > user_sp - USER_STACK_SIZE && end <= user_sp) ||  // stack
+        (start >= APP_BASE_ADDRESS && end <= APP_BASE_ADDRESS + APP_SIZE_LIMIT)  // code
+    { true } else { false }
 }

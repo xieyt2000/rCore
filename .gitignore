@@ -2,3 +2,4 @@
 .idea
 /os/Cargo.lock
 user
+/os/src/link_app.S

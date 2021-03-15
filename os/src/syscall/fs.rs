@@ -1,6 +1,11 @@
 const FD_STDOUT: usize = 1;
+use crate::batch::user_addr;
 
 pub fn sys_write(fd: usize, buf: *const u8, len: usize) -> isize {
+    if !user_addr(buf as usize, len) {
+        log::error!("[kernel] sys_write access denied: buf = {:#x}, len = {}", buf as usize, len);
+        return -1;
+    }
     match fd {
         FD_STDOUT => {
             let slice = unsafe { core::slice::from_raw_parts(buf, len) };
@@ -9,7 +14,8 @@ pub fn sys_write(fd: usize, buf: *const u8, len: usize) -> isize {
             len as isize
         },
         _ => {
-            panic!("Unsupported fd in sys_write!");
+            log::error!("[kernel] Unsupported fd in sys_write!");
+            -1
         }
     }
 }

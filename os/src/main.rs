@@ -11,6 +11,7 @@ mod sbi;
 mod syscall;
 mod trap;
 mod batch;
+mod logging;
 
 global_asm!(include_str!("entry.asm"));
 global_asm!(include_str!("link_app.S"));
@@ -28,7 +29,8 @@ fn clear_bss() {
 #[no_mangle]
 pub fn rust_main() -> ! {
     clear_bss();
-    println!("[kernel] Hello, world!");
+    logging::init();
+    log::info!("[kernel] Hello World!s");
     trap::init();
     batch::init();
     batch::run_next_app();
