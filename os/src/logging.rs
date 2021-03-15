@@ -37,7 +37,6 @@ impl Log for SimpleLogger {
             ),
             level_to_color_code(record.level()),
         );
-        //}
     }
     fn flush(&self) {}
 }
