@@ -1,5 +1,5 @@
 use crate::trap::TrapContext;
-use crate::task::TaskContext;
+use crate::task::{TaskContext, get_current_appid};
 use crate::config::*;
 
 #[repr(align(4096))]
@@ -84,4 +84,15 @@ pub fn init_app_cx(app_id: usize) -> &'static TaskContext {
         TrapContext::app_init_context(get_base_i(app_id), USER_STACK[app_id].get_sp()),
         TaskContext::goto_restore(),
     )
+}
+
+/// return true if [start, end) falls in address of U mode
+pub fn user_addr(start: usize, len: usize) -> bool {
+    let end = start + len;
+    let current = get_current_appid();
+    let user_sp = USER_STACK[current].get_sp();
+    let app_base = get_base_i(current);
+    if (start > user_sp - USER_STACK_SIZE && end <= user_sp) ||  // stack
+        (start >= app_base && end <= app_base + APP_SIZE_LIMIT)  // code
+    { true } else { false }
 }
