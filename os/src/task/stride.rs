@@ -1,7 +1,6 @@
 use core::cmp::Ordering;
 
 /// potential change
-
 #[derive(Ord, Eq)]
 pub struct Stride {
     pub stride: usize,
@@ -10,7 +9,8 @@ pub struct Stride {
 
 impl PartialOrd for Stride {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        other.stride.partial_cmp(&self.stride)
+        if self.stride == other.stride
+        { other.pid.partial_cmp(&self.pid) } else { other.stride.partial_cmp(&self.stride) }
     }
 }
 
