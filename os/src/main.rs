@@ -7,6 +7,8 @@
 #![feature(alloc_error_handler)]
 
 extern crate alloc;
+#[macro_use]
+extern crate bitflags;
 
 #[macro_use]
 mod console;
@@ -18,7 +20,7 @@ mod loader;
 mod config;
 mod task;
 mod timer;
-mod heap_alloc;
+mod mm;
 mod logging;
 
 global_asm!(include_str!("entry.asm"));
@@ -39,9 +41,11 @@ pub fn rust_main() -> ! {
     clear_bss();
     logging::init();
     log::info!("[kernel] Hello, world!");
-    heap_alloc::init_heap();
+    mm::init();
+    log::info!("[kernel] back to world!");
+    mm::remap_test();
     trap::init();
-    loader::load_apps();
+    //trap::enable_interrupt();
     trap::enable_timer_interrupt();
     timer::set_next_trigger();
     task::run_first_task();
