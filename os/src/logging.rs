@@ -10,7 +10,7 @@ pub fn init() {
         Some("info") => LevelFilter::Info,
         Some("debug") => LevelFilter::Debug,
         Some("trace") => LevelFilter::Trace,
-        _ => LevelFilter::Trace,
+        _ => LevelFilter::Off,
     });
 }
 
