@@ -28,14 +28,14 @@ impl Debug for FrameTracker {
 
 impl Drop for FrameTracker {
     fn drop(&mut self) {
-        frame_dealloc(self.ppn);
+        frame_dealloc(self.ppn).ok();
     }
 }
 
 trait FrameAllocator {
     fn new() -> Self;
     fn alloc(&mut self) -> Option<PhysPageNum>;
-    fn dealloc(&mut self, ppn: PhysPageNum);
+    fn dealloc(&mut self, ppn: PhysPageNum) -> Result<(), ()>;
 }
 
 pub struct StackFrameAllocator {
@@ -70,17 +70,19 @@ impl FrameAllocator for StackFrameAllocator {
             }
         }
     }
-    fn dealloc(&mut self, ppn: PhysPageNum) {
+    fn dealloc(&mut self, ppn: PhysPageNum) -> Result<(), ()>{
         let ppn = ppn.0;
         // validity check
         if ppn >= self.current || self.recycled
             .iter()
             .find(|&v| {*v == ppn})
             .is_some() {
-            panic!("Frame ppn={:#x} has not been allocated!", ppn);
+            log::info!("Frame ppn={:#x} has not been allocated!", ppn);
+            return Err(())
         }
         // recycle
         self.recycled.push(ppn);
+        Ok(())
     }
 }
 
@@ -107,10 +109,11 @@ pub fn frame_alloc() -> Option<FrameTracker> {
         .map(|ppn| FrameTracker::new(ppn))
 }
 
-fn frame_dealloc(ppn: PhysPageNum) {
+fn frame_dealloc(ppn: PhysPageNum) -> Result<(), ()> {
     FRAME_ALLOCATOR
         .lock()
-        .dealloc(ppn);
+        .dealloc(ppn)?;
+    Ok(())
 }
 
 #[allow(unused)]
@@ -118,15 +121,15 @@ pub fn frame_allocator_test() {
     let mut v: Vec<FrameTracker> = Vec::new();
     for i in 0..5 {
         let frame = frame_alloc().unwrap();
-        println!("{:?}", frame);
+        log::info!("{:?}", frame);
         v.push(frame);
     }
     v.clear();
     for i in 0..5 {
         let frame = frame_alloc().unwrap();
-        println!("{:?}", frame);
+        log::info!("{:?}", frame);
         v.push(frame);
     }
     drop(v);
-    println!("frame_allocator_test passed!");
+    log::info!("frame_allocator_test passed!");
 }
