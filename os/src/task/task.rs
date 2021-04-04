@@ -37,7 +37,7 @@ impl TaskControlBlock {
                 kernel_stack_bottom.into(),
                 kernel_stack_top.into(),
                 MapPermission::R | MapPermission::W,
-            );
+            ).ok();
         let task_cx_ptr = (kernel_stack_top - core::mem::size_of::<TaskContext>()) as *mut TaskContext;
         unsafe { *task_cx_ptr = TaskContext::goto_trap_return(); }
         let task_control_block = Self {
