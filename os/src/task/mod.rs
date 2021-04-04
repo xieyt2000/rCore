@@ -3,6 +3,7 @@ mod switch;
 mod task;
 
 use crate::loader::{get_num_app, get_app_data};
+use crate::mm::{MapPermission, VirtAddr};
 use crate::trap::TrapContext;
 use core::cell::RefCell;
 use lazy_static::*;
@@ -26,9 +27,9 @@ unsafe impl Sync for TaskManager {}
 
 lazy_static! {
     pub static ref TASK_MANAGER: TaskManager = {
-        println!("init TASK_MANAGER");
+        log::info!("init TASK_MANAGER");
         let num_app = get_num_app();
-        println!("num_app = {}", num_app);
+        log::info!("num_app = {}", num_app);
         let mut tasks: Vec<TaskControlBlock> = Vec::new();
         for i in 0..num_app {
             tasks.push(TaskControlBlock::new(
@@ -112,6 +113,26 @@ impl TaskManager {
             panic!("All applications completed!");
         }
     }
+    fn insert_framed_area(
+        &self,
+        start: VirtAddr,
+        end: VirtAddr,
+        permission: MapPermission,
+    ) -> Result<(), ()> {
+        let mut inner = self.inner.borrow_mut();
+        let current = inner.current_task;
+        inner.tasks[current].memory_set
+            .insert_framed_area(start, end, permission)?;
+        Ok(())
+    }
+
+    fn remove_framed_area(&self, start: VirtAddr, end: VirtAddr) -> Result<(), ()> {
+        let mut inner = self.inner.borrow_mut();
+        let current = inner.current_task;
+        inner.tasks[current].memory_set
+            .remove_framed_area(start, end)?;
+        Ok(())
+    }
 }
 
 pub fn run_first_task() {
@@ -146,4 +167,18 @@ pub fn current_user_token() -> usize {
 
 pub fn current_trap_cx() -> &'static mut TrapContext {
     TASK_MANAGER.get_current_trap_cx()
+}
+
+pub fn insert_framed_area(
+    start: VirtAddr,
+    end: VirtAddr,
+    permission: MapPermission,
+) -> Result<(), ()> {
+    TASK_MANAGER.insert_framed_area(start, end, permission)?;
+    Ok(())
+}
+
+pub fn remove_framed_area(start: VirtAddr, end: VirtAddr) -> Result<(), ()> {
+    TASK_MANAGER.remove_framed_area(start, end)?;
+    Ok(())
 }
