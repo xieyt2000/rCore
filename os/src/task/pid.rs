@@ -76,7 +76,7 @@ impl KernelStack {
                 kernel_stack_bottom.into(),
                 kernel_stack_top.into(),
                 MapPermission::R | MapPermission::W,
-            );
+            ).ok();
         KernelStack {
             pid: pid_handle.0,
         }

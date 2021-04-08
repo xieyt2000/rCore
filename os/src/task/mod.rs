@@ -85,32 +85,24 @@ pub fn add_initproc() {
     add_task(INITPROC.clone());
 }
 
-pub fn run_first_task() {
-    TASK_MANAGER.run_first_task();
-}
-
-fn run_next_task() {
-    TASK_MANAGER.run_next_task();
-}
-
-fn mark_current_suspended() {
-    TASK_MANAGER.mark_current_suspended();
-}
-
-fn mark_current_exited() {
-    TASK_MANAGER.mark_current_exited();
-}
-
 pub fn insert_framed_area(
-    start: VirtAddr,
-    end: VirtAddr,
+    start_va: VirtAddr,
+    end_va: VirtAddr,
     permission: MapPermission,
 ) -> Result<(), ()> {
-    TASK_MANAGER.insert_framed_area(start, end, permission)?;
+    current_task()
+        .unwrap()
+        .acquire_inner_lock()
+        .memory_set
+        .insert_framed_area(start_va, end_va, permission)?;
     Ok(())
 }
 
-pub fn remove_framed_area(start: VirtAddr, end: VirtAddr) -> Result<(), ()> {
-    TASK_MANAGER.remove_framed_area(start, end)?;
+pub fn remove_framed_area(start_va: VirtAddr, end_va: VirtAddr) -> Result<(), ()> {
+    current_task()
+        .unwrap()
+        .acquire_inner_lock()
+        .memory_set
+        .remove_framed_area(start_va, end_va)?;
     Ok(())
 }

@@ -51,12 +51,11 @@ impl MemorySet {
         self.page_table.token()
     }
     /// Assume that no conflicts.
-    pub fn insert_framed_area(&mut self, start: VirtAddr,
-                              end: VirtAddr, permission: MapPermission)
+    pub fn insert_framed_area(&mut self, start_va: VirtAddr, end_va: VirtAddr, permission: MapPermission)
                               -> Result<(), ()> {
         self.push(MapArea::new(
-            start,
-            end,
+            start_va,
+            end_va,
             MapType::Framed,
             permission,
         ), None)?;
