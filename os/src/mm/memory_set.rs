@@ -96,39 +96,39 @@ impl MemorySet {
         // map trampoline
         memory_set.map_trampoline();
         // map kernel sections
-        log::info!(".text [{:#x}, {:#x})", stext as usize, etext as usize);
-        log::info!(".rodata [{:#x}, {:#x})", srodata as usize, erodata as usize);
-        log::info!(".data [{:#x}, {:#x})", sdata as usize, edata as usize);
-        log::info!(".bss [{:#x}, {:#x})", sbss_with_stack as usize, ebss as usize);
-        log::info!("mapping .text section");
+        println!(".text [{:#x}, {:#x})", stext as usize, etext as usize);
+        println!(".rodata [{:#x}, {:#x})", srodata as usize, erodata as usize);
+        println!(".data [{:#x}, {:#x})", sdata as usize, edata as usize);
+        println!(".bss [{:#x}, {:#x})", sbss_with_stack as usize, ebss as usize);
+        println!("mapping .text section");
         memory_set.push(MapArea::new(
             (stext as usize).into(),
             (etext as usize).into(),
             MapType::Identical,
             MapPermission::R | MapPermission::X,
         ), None).ok();
-        log::info!("mapping .rodata section");
+        println!("mapping .rodata section");
         memory_set.push(MapArea::new(
             (srodata as usize).into(),
             (erodata as usize).into(),
             MapType::Identical,
             MapPermission::R,
         ), None).ok();
-        log::info!("mapping .data section");
+        println!("mapping .data section");
         memory_set.push(MapArea::new(
             (sdata as usize).into(),
             (edata as usize).into(),
             MapType::Identical,
             MapPermission::R | MapPermission::W,
         ), None).ok();
-        log::info!("mapping .bss section");
+        println!("mapping .bss section");
         memory_set.push(MapArea::new(
             (sbss_with_stack as usize).into(),
             (ebss as usize).into(),
             MapType::Identical,
             MapPermission::R | MapPermission::W,
         ), None).ok();
-        log::info!("mapping physical memory");
+        println!("mapping physical memory");
         memory_set.push(MapArea::new(
             (ekernel as usize).into(),
             MEMORY_END.into(),
@@ -359,5 +359,5 @@ pub fn remap_test() {
         kernel_space.page_table.translate(mid_data.floor()).unwrap().executable(),
         false,
     );
-    log::info!("remap_test passed!");
+    println!("remap_test passed!");
 }

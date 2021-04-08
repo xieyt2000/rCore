@@ -41,5 +41,5 @@ pub fn heap_test() {
     }
     assert!(bss_range.contains(&(v.as_ptr() as usize)));
     drop(v);
-    log::info!("heap_test passed!");
+    println!("heap_test passed!");
 }

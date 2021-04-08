@@ -78,7 +78,7 @@ impl FrameAllocator for StackFrameAllocator {
             .iter()
             .find(|&v| {*v == ppn})
             .is_some() {
-            log::info!("Frame ppn={:#x} has not been allocated!", ppn);
+            println!("Frame ppn={:#x} has not been allocated!", ppn);
             return Err(())
         }
         // recycle
@@ -122,15 +122,15 @@ pub fn frame_allocator_test() {
     let mut v: Vec<FrameTracker> = Vec::new();
     for i in 0..5 {
         let frame = frame_alloc().unwrap();
-        log::info!("{:?}", frame);
+        println!("{:?}", frame);
         v.push(frame);
     }
     v.clear();
     for i in 0..5 {
         let frame = frame_alloc().unwrap();
-        log::info!("{:?}", frame);
+        println!("{:?}", frame);
         v.push(frame);
     }
     drop(v);
-    log::info!("frame_allocator_test passed!");
+    println!("frame_allocator_test passed!");
 }

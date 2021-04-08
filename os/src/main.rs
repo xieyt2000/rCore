@@ -40,9 +40,9 @@ fn clear_bss() {
 pub fn rust_main() -> ! {
     clear_bss();
     logging::init();
-    log::info!("[kernel] Hello, world!");
+    println!("[kernel] Hello, world!");
     mm::init();
-    log::info!("[kernel] back to world!");
+    println!("[kernel] back to world!");
     mm::remap_test();
     task::add_initproc();
     println!("after initproc!");
