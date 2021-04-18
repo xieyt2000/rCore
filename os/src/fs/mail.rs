@@ -9,10 +9,15 @@ pub struct Mail(pub VecDeque<Vec<u8>>);
 impl Mail {
     pub fn write(&mut self, buf: UserBuffer) -> usize {
         let mut write_size = 0usize;
+        let mut buf_iter = buf.into_iter();
         let mut mail: Vec<u8> = Vec::new();
-        for c in buf {
-            mail.push(unsafe { *c });
-            write_size += 1;
+        loop {
+            if let Some(byte_ref) = buf_iter.next() {
+                mail.push(unsafe { *byte_ref });
+                write_size += 1;
+            } else {
+                break;
+            }
         }
         self.0.push_back(mail);
         write_size

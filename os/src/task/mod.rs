@@ -8,8 +8,9 @@ mod pid;
 use crate::loader::{get_app_data_by_name};
 use crate::mm::{MapPermission, VirtAddr};
 use switch::__switch;
-use task::{TaskControlBlock, TaskStatus};use alloc::sync::Arc;
-use manager::fetch_task;
+use task::{TaskControlBlock, TaskStatus};
+use alloc::sync::Arc;
+use manager::{fetch_task, get_ready_task_by_pid};
 use lazy_static::*;
 
 pub use context::TaskContext;
@@ -83,6 +84,14 @@ lazy_static! {
 
 pub fn add_initproc() {
     add_task(INITPROC.clone());
+}
+
+pub fn get_task_by_pid(pid: usize) ->  Option<Arc<TaskControlBlock>> {
+    let current = current_task().unwrap();
+    if current.pid.0 == pid {
+        return Some(current);
+    }
+    get_ready_task_by_pid(pid)
 }
 
 pub fn insert_framed_area(

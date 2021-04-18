@@ -109,11 +109,11 @@ pub fn sys_exec(path: *const u8) -> isize {
     }
 }
 
-pub fn sys_spawn(filename: *const u8) -> isize {
-    let filename = translated_str(current_user_token(), filename);
-    if let Some(app_data) = get_app_data_by_name(filename.as_str()) {
+pub fn sys_spawn(path: *const u8) -> isize {
+    let path = translated_str(current_user_token(), path);
+    if let Some(data) = get_app_data_by_name(path.as_str()) {
         let new_task = current_task().unwrap().fork();
-        new_task.exec(app_data);
+        new_task.exec(data);
         let new_pid = new_task.pid.0;
         add_task(new_task);
         new_pid as isize

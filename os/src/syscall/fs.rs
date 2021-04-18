@@ -1,5 +1,5 @@
 use crate::mm::{UserBuffer, translated_byte_buffer, translated_refmut};
-use crate::task::{current_user_token, current_task};
+use crate::task::{current_user_token, current_task, get_task_by_pid};
 use crate::fs::{make_pipe};
 
 pub fn sys_write(fd: usize, buf: *const u8, len: usize) -> isize {
@@ -13,9 +13,11 @@ pub fn sys_write(fd: usize, buf: *const u8, len: usize) -> isize {
         let file = file.clone();
         // release Task lock manually to avoid deadlock
         drop(inner);
-        file.write(
-            UserBuffer::new(translated_byte_buffer(token, buf, len))
-        ) as isize
+        if let Some(buffer) = translated_byte_buffer(token, buf, len) {
+            file.write(UserBuffer::new(buffer)) as isize
+        } else {
+            -1
+        }
     } else {
         -1
     }
@@ -32,9 +34,11 @@ pub fn sys_read(fd: usize, buf: *const u8, len: usize) -> isize {
         let file = file.clone();
         // release Task lock manually to avoid deadlock
         drop(inner);
-        file.read(
-            UserBuffer::new(translated_byte_buffer(token, buf, len))
-        ) as isize
+        if let Some(buffer) = translated_byte_buffer(token, buf, len) {
+            file.read(UserBuffer::new(buffer)) as isize
+        } else {
+            -1
+        }
     } else {
         -1
     }
@@ -65,4 +69,41 @@ pub fn sys_pipe(pipe: *mut usize) -> isize {
     *translated_refmut(token, pipe) = read_fd;
     *translated_refmut(token, unsafe { pipe.add(1) }) = write_fd;
     0
+}
+
+pub fn sys_mail_read(buf: *const u8, len: usize) -> isize {
+    let token = current_user_token();
+    let task = current_task().unwrap();
+    let mut inner = task.acquire_inner_lock();
+    if !inner.mail.available_read() {
+        return -1;
+    } else if len == 0 {
+        return 0;
+    }
+    let len = len.min(256);
+    if let Some(buffer) = translated_byte_buffer(token, buf, len) {
+        inner.mail.read(UserBuffer::new(buffer)) as isize
+    } else {
+        -1
+    }
+}
+
+pub fn sys_mail_write(pid: usize, buf: *mut u8, len: usize) -> isize {
+    let token = current_user_token();
+    let task = match get_task_by_pid(pid) {
+        Some(p) => p,
+        None => return -1,
+    };
+    let mut inner = task.acquire_inner_lock();
+    if !inner.mail.available_write() {
+        return -1;
+    } else if len == 0 {
+        return 0;
+    }
+    let len = len.min(256);
+    if let Some(buffer) = translated_byte_buffer(token, buf, len) {
+        inner.mail.write(UserBuffer::new(buffer)) as isize
+    } else {
+        -1
+    }
 }
