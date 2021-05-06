@@ -167,7 +167,9 @@ impl Inode {
                     ),
                     DIRENT_SZ,
                 );
-                v.push(String::from(dirent.name()));
+                if dirent.inode_number() != 0 {
+                    v.push(String::from(dirent.name()));
+                }
             }
             v
         })
