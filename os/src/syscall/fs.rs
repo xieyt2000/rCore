@@ -5,7 +5,7 @@ use crate::mm::{
     translated_str,
 };
 use crate::task::{current_user_token, current_task, get_task_by_pid};
-use crate::fs::{make_pipe, OpenFlags, open_file};
+use crate::fs::{make_pipe, OpenFlags, open_file, Stat, link, unlink};
 use alloc::sync::Arc;
 
 pub fn sys_write(fd: usize, buf: *const u8, len: usize) -> isize {
@@ -62,7 +62,7 @@ pub fn sys_open(path: *const u8, flags: u32) -> isize {
     let path = translated_str(token, path);
     if let Some(inode) = open_file(
         path.as_str(),
-        OpenFlags::from_bits(flags).unwrap()
+        OpenFlags::from_bits(flags).unwrap(),
     ) {
         let mut inner = task.acquire_inner_lock();
         let fd = inner.alloc_fd();
@@ -149,4 +149,36 @@ pub fn sys_mail_write(pid: usize, buf: *mut u8, len: usize) -> isize {
     } else {
         -1
     }
+}
+
+pub fn sys_linkat(old_path_addr: usize, new_path_addr: usize) -> isize {
+    let token = current_user_token();
+    let old_path = translated_str(token, old_path_addr as *const u8);
+    let new_path = translated_str(token, new_path_addr as *const u8);
+    link(old_path.as_str(), new_path.as_str())
+}
+
+pub fn sys_unlinkat(path_addr: usize) -> isize {
+    let token = current_user_token();
+    let path = translated_str(token, path_addr as *const u8);
+    unlink(path.as_str())
+}
+
+pub fn sys_fstat(fd: usize, st: *mut Stat) -> isize {
+    let token = current_user_token();
+    let task = current_task().unwrap();
+    let inner = task.acquire_inner_lock();
+    if fd >= inner.fd_table.len() {
+        return -1;
+    }
+    if inner.fd_table[fd].is_none() {
+        return -1;
+    }
+    match inner.fd_table[fd].as_ref().unwrap().get_stat() {
+        Some(stat) => {
+            *translated_refmut(token, st) = stat;
+        }
+        None => { return -1; }
+    };
+    0
 }

@@ -56,7 +56,7 @@ pub fn sys_set_priority(prio: isize) -> isize {
 }
 
 pub fn sys_mmap(start: usize, len: usize, port: usize) -> isize {
-    if start % 4096 != 0 || (port & !0x7) != 0 || (port & 0x7) == 0  {
+    if start % 4096 != 0 || (port & !0x7) != 0 || (port & 0x7) == 0 {
         return -1;
     }
     let mut permission = MapPermission::U;
@@ -83,7 +83,6 @@ pub fn sys_munmap(start: usize, len: usize) -> isize {
         Err(_) => -1,
     }
 }
-
 
 pub fn sys_getpid() -> isize {
     current_task().unwrap().pid.0 as isize
@@ -129,9 +128,10 @@ pub fn sys_exec(path: *const u8, mut args: *const usize) -> isize {
 
 pub fn sys_spawn(path: *const u8) -> isize {
     let path = translated_str(current_user_token(), path);
-    if let Some(data) = get_app_data_by_name(path.as_str()) {
+    if let Some(app_inode) = open_file(path.as_str(), OpenFlags::RDONLY) {
+        let data = app_inode.read_all();
         let new_task = current_task().unwrap().fork();
-        new_task.exec(data);
+        new_task.exec(data.as_slice(), Vec::new());
         let new_pid = new_task.pid.0;
         add_task(new_task);
         new_pid as isize
@@ -150,7 +150,7 @@ pub fn sys_waitpid(pid: isize, exit_code_ptr: *mut i32) -> isize {
     let mut inner = task.acquire_inner_lock();
     if inner.children
         .iter()
-        .find(|p| {pid == -1 || pid as usize == p.getpid()})
+        .find(|p| { pid == -1 || pid as usize == p.getpid() })
         .is_none() {
         return -1;
         // ---- release current PCB lock
