@@ -192,8 +192,8 @@ pub struct Stat {
     pad: [u64; 7],
 }
 
-/// StatMode 定义：
 bitflags! {
+    /// StatMode 定义：
     pub struct StatMode: u32 {
         const NULL  = 0;
         /// directory

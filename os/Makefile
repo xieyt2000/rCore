@@ -50,7 +50,7 @@ $(KERNEL_BIN): kernel
 
 $(FS_IMG): $(APPS)
 	@cd ../user && make build
-	@cd ../easy-fs-fuse && cargo run --release -- -s ../user/src/bin/ -t ../user/target/riscv64gc-unknown-none-elf/release/
+	@cd ../easy-fs-fuse && cargo run --release -- -s ../user/build/elf/ -t ../user/target/riscv64gc-unknown-none-elf/release/
 
 $(APPS):
 
