@@ -156,4 +156,49 @@ impl File for OSInode {
         }
         total_write_size
     }
+    fn get_stat(&self) -> Option<Stat> {
+        let inner = self.inner.lock();
+        let inode_id = inner.inode.inode_id;
+        Some(Stat {
+            dev: 0,
+            ino: inode_id as u64,
+            mode: StatMode::FILE,
+            nlink: ROOT_INODE.count_links(inode_id),
+            pad: [0; 7],
+        })
+    }
+}
+
+pub fn link(old_name: &str, new_name: &str) -> isize {
+    ROOT_INODE.link(old_name, new_name)
+}
+
+pub fn unlink(name: &str) -> isize {
+    ROOT_INODE.unlink(name)
+}
+
+#[repr(C)]
+#[derive(Debug)]
+pub struct Stat {
+    /// 文件所在磁盘驱动器号
+    pub dev: u64,
+    /// inode 文件所在 inode 编号
+    pub ino: u64,
+    /// 文件类型
+    pub mode: StatMode,
+    /// 硬链接数量，初始为1
+    pub nlink: u32,
+    /// 无需考虑，为了兼容性设计
+    pad: [u64; 7],
+}
+
+/// StatMode 定义：
+bitflags! {
+    pub struct StatMode: u32 {
+        const NULL  = 0;
+        /// directory
+        const DIR   = 0o040000;
+        /// ordinary regular file
+        const FILE  = 0o100000;
+    }
 }
