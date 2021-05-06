@@ -23,6 +23,7 @@ mod timer;
 mod mm;
 mod fs;
 mod drivers;
+mod logging;
 
 global_asm!(include_str!("entry.asm"));
 
@@ -39,6 +40,7 @@ fn clear_bss() {
 #[no_mangle]
 pub fn rust_main() -> ! {
     clear_bss();
+    logging::init();
     println!("[kernel] Hello, world!");
     mm::init();
     mm::remap_test();
