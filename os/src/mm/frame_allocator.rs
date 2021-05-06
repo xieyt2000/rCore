@@ -110,7 +110,7 @@ pub fn frame_alloc() -> Option<FrameTracker> {
         .map(|ppn| FrameTracker::new(ppn))
 }
 
-fn frame_dealloc(ppn: PhysPageNum) -> Result<(), ()> {
+pub fn frame_dealloc(ppn: PhysPageNum) -> Result<(), ()> {
     FRAME_ALLOCATOR
         .lock()
         .dealloc(ppn)?;
