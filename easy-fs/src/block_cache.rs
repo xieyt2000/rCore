@@ -17,8 +17,8 @@ pub struct BlockCache {
 impl BlockCache {
     /// Load a new BlockCache from disk.
     pub fn new(
-        block_id: usize, 
-        block_device: Arc<dyn BlockDevice>
+        block_id: usize,
+        block_device: Arc<dyn BlockDevice>,
     ) -> Self {
         let mut cache = [0u8; BLOCK_SZ];
         block_device.read_block(block_id, &mut cache);
@@ -38,7 +38,7 @@ impl BlockCache {
         let type_size = core::mem::size_of::<T>();
         assert!(offset + type_size <= BLOCK_SZ);
         let addr = self.addr_of_offset(offset);
-        unsafe { &*(addr as *const T) } 
+        unsafe { &*(addr as *const T) }
     }
 
     pub fn get_mut<T>(&mut self, offset: usize) -> &mut T where T: Sized {
@@ -53,7 +53,7 @@ impl BlockCache {
         f(self.get_ref(offset))
     }
 
-    pub fn modify<T, V>(&mut self, offset:usize, f: impl FnOnce(&mut T) -> V) -> V {
+    pub fn modify<T, V>(&mut self, offset: usize, f: impl FnOnce(&mut T) -> V) -> V {
         f(self.get_mut(offset))
     }
 
@@ -90,7 +90,7 @@ impl BlockCacheManager {
         if let Some(pair) = self.queue
             .iter()
             .find(|pair| pair.0 == block_id) {
-                Arc::clone(&pair.1)
+            Arc::clone(&pair.1)
         } else {
             // substitute
             if self.queue.len() == BLOCK_CACHE_SIZE {
@@ -122,7 +122,7 @@ lazy_static! {
 
 pub fn get_block_cache(
     block_id: usize,
-    block_device: Arc<dyn BlockDevice>
+    block_device: Arc<dyn BlockDevice>,
 ) -> Arc<Mutex<BlockCache>> {
     BLOCK_CACHE_MANAGER.lock().get_block_cache(block_id, block_device)
 }

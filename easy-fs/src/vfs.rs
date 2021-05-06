@@ -38,14 +38,14 @@ impl Inode {
     fn read_disk_inode<V>(&self, f: impl FnOnce(&DiskInode) -> V) -> V {
         get_block_cache(
             self.block_id,
-            Arc::clone(&self.block_device)
+            Arc::clone(&self.block_device),
         ).lock().read(self.block_offset, f)
     }
 
     fn modify_disk_inode<V>(&self, f: impl FnOnce(&mut DiskInode) -> V) -> V {
         get_block_cache(
             self.block_id,
-            Arc::clone(&self.block_device)
+            Arc::clone(&self.block_device),
         ).lock().modify(self.block_offset, f)
     }
 
@@ -78,15 +78,15 @@ impl Inode {
         let fs = self.fs.lock();
         self.read_disk_inode(|disk_inode| {
             self.find_inode_id(name, disk_inode)
-            .map(|inode_id| {
-                let (block_id, block_offset) = fs.get_disk_inode_pos(inode_id);
-                Arc::new(Self::new(
-                    block_id,
-                    block_offset,
-                    self.fs.clone(),
-                    self.block_device.clone(),
-                ))
-            })
+                .map(|inode_id| {
+                    let (block_id, block_offset) = fs.get_disk_inode_pos(inode_id);
+                    Arc::new(Self::new(
+                        block_id,
+                        block_offset,
+                        self.fs.clone(),
+                        self.block_device.clone(),
+                    ))
+                })
         })
     }
 
@@ -121,11 +121,11 @@ impl Inode {
         // alloc a inode with an indirect block
         let new_inode_id = fs.alloc_inode();
         // initialize inode
-        let (new_inode_block_id, new_inode_block_offset) 
+        let (new_inode_block_id, new_inode_block_offset)
             = fs.get_disk_inode_pos(new_inode_id);
         get_block_cache(
             new_inode_block_id as usize,
-            Arc::clone(&self.block_device)
+            Arc::clone(&self.block_device),
         ).lock().modify(new_inode_block_offset, |new_inode: &mut DiskInode| {
             new_inode.initialize(DiskInodeType::File);
         });
