@@ -59,7 +59,7 @@ pub extern "C" fn virtio_dma_alloc(pages: usize) -> PhysAddr {
 pub extern "C" fn virtio_dma_dealloc(pa: PhysAddr, pages: usize) -> i32 {
     let mut ppn_base: PhysPageNum = pa.into();
     for _ in 0..pages {
-        frame_dealloc(ppn_base);
+        frame_dealloc(ppn_base).ok();
         ppn_base.step();
     }
     0
