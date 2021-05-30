@@ -5,3 +5,4 @@ user
 /os/src/link_app.S
 /os/test.sh
 /os/src/linker.ld
+.DS_Store
