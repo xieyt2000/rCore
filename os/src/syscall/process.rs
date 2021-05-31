@@ -90,7 +90,10 @@ pub fn sys_getpid() -> isize {
 
 pub fn sys_fork() -> isize {
     let current_task = current_task().unwrap();
-    let new_task = current_task.fork();
+    let new_task = match current_task.fork() {
+        Ok(task) => task,
+        Err(()) => return -1,
+    };
     let new_pid = new_task.pid.0;
     // modify trap context of new_task, because it returns immediately after switching
     let trap_cx = new_task.acquire_inner_lock().get_trap_cx();
@@ -130,7 +133,7 @@ pub fn sys_spawn(path: *const u8) -> isize {
     let path = translated_str(current_user_token(), path);
     if let Some(app_inode) = open_file(path.as_str(), OpenFlags::RDONLY) {
         let data = app_inode.read_all();
-        let new_task = current_task().unwrap().fork();
+        let new_task = current_task().unwrap().fork().unwrap();
         new_task.exec(data.as_slice(), Vec::new());
         let new_pid = new_task.pid.0;
         add_task(new_task);
